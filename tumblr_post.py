@@ -12,7 +12,7 @@ url_regex = r"(https?://[^\s)]+\.[a-z]{3,4})"
 class TumblrPostTrail:
     def __init__(self, post_trail):
         self.blog = post_trail.blog.name
-        self.content = html2text.html2text(post_trail.content)
+        self.content = html2text.html2text(post_trail.content, bodywidth=0)
         self.media_present = self._detect_media_()
 
     def _detect_media_(self):
