@@ -108,7 +108,9 @@ class AnswerPost(TumblrPost):
         post_buffer += ' asked:\n'
         if self.question.endswith('\n'):
             self.question = self.question.removesuffix('\n')
-        post_buffer += f'>{telegramify_markdown.markdownify(self.question.replace("\n", "\n>"))}\n'
+        question = telegramify_markdown.markdownify(
+            self.question.replace("\n", "\n>"))
+        post_buffer += f'>{question}\n'
 
         post_buffer += f'[{self.trail[0].blog}]({self.trail[0].blog}.tumblr.com)'
         post_buffer += ' answered:\n'
