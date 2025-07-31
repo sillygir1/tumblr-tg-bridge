@@ -3,7 +3,7 @@
 The whole project is WIP and so is this readme.
 
 >[!IMPORTANT]
-> Needs a `config.py` file containing `blog_name` and `blog_alias` strings, a `tumblr_secret` iterable containing secret stuff (you can get the tuple from the [Tumblr API Console](https://api.tumblr.com/console/calls/user/info)), `telegram_api_key` string (obtainable from [@BotFather](https://t.me/BotFather)), a `telegram_chat_id` string and a `timestamp_file_path` string.
+> Needs a `config.py` file containing `blog_name` string, a `tumblr_secret` iterable containing secret stuff (you can get the tuple from the [Tumblr API Console](https://api.tumblr.com/console/calls/user/info)), `telegram_api_key` string (obtainable from [@BotFather](https://t.me/BotFather)), a `telegram_chat_id` string and a `timestamp_file_path` string.
 
 Example `config.py`:
 
