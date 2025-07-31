@@ -6,7 +6,7 @@ import dotmap
 import re
 import telegram
 
-url_regex = r"(https?://[^\s)]+\.[a-z]{3,4})"
+media_url_regex = r"(https?://[^\s)]+\.[a-z]{3,4})"
 
 
 class TumblrPostTrail:
@@ -16,7 +16,7 @@ class TumblrPostTrail:
         self.media_present = self._detect_media_()
 
     def _detect_media_(self):
-        media = re.findall(url_regex, self.content)
+        media = re.findall(media_url_regex, self.content)
         if media == []:
             return False
         self.media = media
@@ -31,6 +31,7 @@ class TumblrPost:
         if 'parent_post_url' in post_data.keys():
             self.is_reblog = True
             post_url = urlparse(post_data.parent_post_url)
+            # print(f'{post_url=}')
             blog_name = post_url.netloc.split('.')[0]
             if blog_name == 'www':
                 blog_name = post_url.path.split('/')[-2]
@@ -42,6 +43,7 @@ class TumblrPost:
         self.trail = [TumblrPostTrail(trail) for trail in post_data.trail]
 
         self.media_present = any([trail.media_present for trail in self.trail])
+        self.tags = post_data.tags
         self.blog = post_data.blog_name
         self.timestamp = post_data.timestamp
 
@@ -58,6 +60,9 @@ class TextPost(TumblrPost):
             content = telegram.helpers.escape_markdown(
                 trail.content.strip(), 1)
             post_buffer += f'[{trail.blog}]({trail.blog}.tumblr.com):\n{content}\n\n'
+
+        for tag in self.tags:
+            post_buffer += f'[#{tag}](tumblr.com/tagged/{tag}) '
 
         return post_buffer
 
@@ -94,5 +99,6 @@ if __name__ == '__main__':
             print(f'{trail.media_present=}')
             if trail.media_present:
                 print(f'{trail.media=}')
+        print(f'{tumblr_post.tags=}')
 
         print('')
