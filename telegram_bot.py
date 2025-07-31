@@ -18,7 +18,6 @@ if not os.path.isfile(timestamp_file_name):
 
 with open(timestamp_file_name, 'r') as time_file:
     last_time = int(time_file.readline())
-    print(last_time)
 
 tumblr_client = pytumblr.TumblrRestClient(*config.tumblr_secret)
 
@@ -31,15 +30,16 @@ for post in latest_posts:
 
     if post.timestamp < last_time:
         continue
+    # Commented for testing purposes
     # if post.state == 'private':
-    #     continue
+        # continue
 
     if post.type == 'text':
         parsed_post = tumblr_post.TextPost(post)
         post_text = parsed_post.prettify()
-        print(post_text)
-        print('')
-        print('')
+        # print(post_text)
+        # print('')
+        # print('')
         response = requests.post(
             f'{base_url}/sendMessage',
             params={
