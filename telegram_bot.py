@@ -8,15 +8,14 @@ from time import time
 import tumblr_post
 
 base_url = f'https://api.telegram.org/bot{config.telegram_api_key}'
-timestamp_file_name = 'last_checked'
 
 
-if not os.path.isfile(timestamp_file_name):
-    with open(timestamp_file_name, 'x') as time_file:
+if not os.path.isfile(config.timestamp_file_path):
+    with open(config.timestamp_file_path, 'x') as time_file:
         time_file.write(str(int(time())))
     exit(1)
 
-with open(timestamp_file_name, 'r') as time_file:
+with open(config.timestamp_file_path, 'r') as time_file:
     last_time = int(time_file.readline())
 
 tumblr_client = pytumblr.TumblrRestClient(*config.tumblr_secret)
@@ -52,5 +51,5 @@ for post in latest_posts:
         print(response.content)
 
 
-with open(timestamp_file_name, 'w+') as time_file:
+with open(config.timestamp_file_path, 'w+') as time_file:
     time_file.write(str(int(time())))
