@@ -21,3 +21,10 @@ tumblr_secret = (
 telegram_api_key = '1234567890:asgdyuvcizfnawlvkcvz'
 telegram_chat_id = '1234567890'
 ```
+
+## Usage
+
+TODO rewrite this section
+
+- Manual activation: run `telegram_bot.py`
+- Automated posting: add it to crontab
