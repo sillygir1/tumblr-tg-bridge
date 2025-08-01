@@ -7,7 +7,10 @@ import re
 import telegram
 import telegramify_markdown
 
-media_url_regex = r"(https?://[^\s)]+\.[a-z]{3,4})"
+markdown_link_regex = r'🖼\[(.*)\]\((https?:\/\/[^\s)]+\.[a-z]{3,4})\)'
+media_url_regex = r'(https?://[^\s)]+\.[a-z]{3,4})'
+
+image_placeholder = '\[image\]'
 
 
 def format_blog_url(blog: str):
@@ -127,7 +130,19 @@ class AnswerPost(TumblrPost):
 
 
 class ImagePost(TextPost):
-    ...
+    def prettify(self):
+        if self.media_count != 1:
+            return '', ''
+        prettified_text = super().prettify()
+        image_url = re.findall(markdown_link_regex, prettified_text)[0][1]
+        prettified_text = re.sub(
+            markdown_link_regex, image_placeholder, prettified_text)
+        prettified_text = prettified_text.replace(
+            f'{image_placeholder}ALT', image_placeholder)
+        if len(self.trail) == 1:
+            prettified_text = prettified_text.replace(
+                image_placeholder, '').replace('\n\n', '\n')
+        return prettified_text, image_url
 
 
 if __name__ == '__main__':

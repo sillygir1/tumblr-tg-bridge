@@ -23,6 +23,21 @@ def send_text_post(post_text: str):
     # print(response.content)
 
 
+def send_image_post(post_text: str, image_url: str):
+    response = requests.post(
+        f'{base_url}/sendPhoto',
+        params={
+            'chat_id': config.telegram_chat_id,
+            'parse_mode': 'MarkdownV2',
+            'link_preview_options': '{"is_disabled": true}',
+            'photo': image_url,
+            'show_caption_above_media': True,
+            'caption': post_text,
+        }
+    )
+    # print(response.content)
+
+
 if not os.path.isfile(config.timestamp_file_path):
     with open(config.timestamp_file_path, 'x') as time_file:
         time_file.write(str(int(time())))
@@ -45,10 +60,7 @@ for post in latest_posts:
     if post.state == 'private':
         continue
 
-    # print(f'{post.type=}')
-
     if post.type == 'text':
-        # print(post)
         parsed_post = tumblr_post.TextPost(post)
         match (parsed_post.media_count):
             case 0:
@@ -58,8 +70,12 @@ for post in latest_posts:
                 # print('')
                 # print('')
             case 1:
-                # TODO image post
-                pass
+                parsed_post = tumblr_post.ImagePost(post)
+                post_text, image_url = parsed_post.prettify()
+                # print(f'{post_text=}')
+                # print(f'{image_url=}')
+                send_image_post(post_text, image_url)
+
             case _:
                 # Multiple images. Impossible with current technology.
                 continue
