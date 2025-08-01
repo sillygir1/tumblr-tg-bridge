@@ -8,7 +8,7 @@ import telegram
 import telegramify_markdown
 
 markdown_link_regex = r'🖼\[(.*)\]\((https?:\/\/[^\s)]+\.[a-z]{3,4})\)'
-media_url_regex = r'(https?://[^\s)]+\.[a-z]{3,4})'
+media_url_regex = r'(https?://[^\s)]+\.[a-z]{3,4})\)'
 
 image_placeholder = '\[image\]'
 
