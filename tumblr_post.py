@@ -50,6 +50,7 @@ class TumblrPost:
             self.is_reblog = False
         self.trail = [TumblrPostTrail(trail) for trail in post_data.trail]
 
+        self.post_url = post_data.post_url
         self.media_count = sum([len(trail.media) for trail in self.trail])
         self.tags = post_data.tags
         self.blog = post_data.blog_name
@@ -58,7 +59,8 @@ class TumblrPost:
     def _format_header_(self) -> str:
         header_buffer = ''
         if self.is_reblog:
-            header_buffer += f'{format_blog_url(config.blog_name)} 🔁'
+            header_buffer += f'{format_blog_url(config.blog_name)}'
+            header_buffer += f' [🔁]({self.post_url}) '
             if self.reblog_source:
                 header_buffer += f' {format_blog_url(self.reblog_source)}'
             header_buffer += '\n'
@@ -135,6 +137,7 @@ class ImagePost(TextPost):
             return '', ''
         prettified_text = super().prettify()
         image_url = re.findall(markdown_link_regex, prettified_text)[0][1]
+
         prettified_text = re.sub(
             markdown_link_regex, image_placeholder, prettified_text)
         prettified_text = prettified_text.replace(

@@ -71,6 +71,12 @@ for post in latest_posts:
                 # print('')
             case 1:
                 parsed_post = tumblr_post.ImagePost(post)
+                media_url = [
+                    trail.media for trail in parsed_post.trail if trail.media][0][0]
+                if not media_url.endswith('.jpg') and\
+                        not media_url.endswith('.jpeg') and\
+                        not media_url.endswith('.png'):
+                    continue
                 post_text, image_url = parsed_post.prettify()
                 # print(f'{post_text=}')
                 # print(f'{image_url=}')
