@@ -233,38 +233,44 @@ class TelegramBot:
 
         while self.inline_running:
             sleep(1)
-            response = DotMap(
-                json.loads(
-                    requests.get(
-                        f'{self.api_base}/getUpdates',
-                        params={
-                            'offset': last_update + 1,
-                            'allowed_updates': '["inline_query"]',
-                        }).content))
-            if not response.ok:
-                print('Can\'t get updates')
-                continue
+            try:
+                response = DotMap(
+                    json.loads(
+                        requests.get(
+                            f'{self.api_base}/getUpdates',
+                            params={
+                                'offset': last_update + 1,
+                                'allowed_updates': '["inline_query"]',
+                            }).content))
+                if not response.ok:
+                    print('Can\'t get updates')
+                    continue
 
-            results = response.result
-            if not results:
-                continue
-            last_update = response.result[-1].update_id
-            # print(f'{results=}')
-            for result in results:
-                if str(result.inline_query['from'].id) not in self.allowed_users:
+                results = response.result
+                if not results:
                     continue
-                query = result.inline_query.query
-                if not 'tumblr.com/' in query:
-                    continue
-                blog, post_id = self._parse_url_(query)
-                if not blog or not post_id:
-                    continue
-                post = self.tumblr_client.posts(blog, id=post_id)['posts'][0]
-                # print(f'{post=}')
-                if not post:
-                    continue
-                post = self._process_post_(DotMap(post))
-                self._inline_post_(result.inline_query.id, *post)
+
+                last_update = response.result[-1].update_id
+                # print(f'{results=}')
+                for result in results:
+                    if str(result.inline_query['from'].id) not in self.allowed_users:
+                        continue
+                    query = result.inline_query.query
+                    if not 'tumblr.com/' in query:
+                        continue
+                    blog, post_id = self._parse_url_(query)
+                    if not blog or not post_id:
+                        continue
+                    post = self.tumblr_client.posts(
+                        blog, id=post_id)['posts'][0]
+                    # print(f'{post=}')
+                    if not post:
+                        continue
+                    post = self._process_post_(DotMap(post))
+                    self._inline_post_(result.inline_query.id, *post)
+            except Exception as e:
+                print('Exception when getting post inline.')
+                print(traceback.format_exc())
 
     def start(self):
         if self.is_bridge:
