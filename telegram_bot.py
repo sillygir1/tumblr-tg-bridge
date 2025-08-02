@@ -1,12 +1,14 @@
 import config
 from dotmap import DotMap
 # import os.path
+import json
 import pytumblr
 import requests
 from time import time, sleep
 import threading
 import traceback
 import tumblr_post
+from urllib.parse import urlparse
 
 
 class TelegramBot:
@@ -15,14 +17,14 @@ class TelegramBot:
         self.is_inline = 'inline' in config_file.mode
         self.api_base = config_file.api_url
         self.debug = config_file.debug
+        self.blog_name = config_file.blog_name
+        self.tumblr_client = pytumblr.TumblrRestClient(
+            *config_file.tumblr_secret)
 
         self.bridge_running = False
         self.inline_running = False
 
         if self.is_bridge:
-            self.blog_name = config_file.blog_name
-            self.tumblr_client = pytumblr.TumblrRestClient(
-                *config_file.tumblr_secret)
             self.chat_id = config_file.telegram_chat_id
 
             self.last_post_time = int(time())
@@ -76,16 +78,65 @@ class TelegramBot:
         if self.debug:
             print(response.content)
 
+    def _inline_post_(self, query_id: str, post_type: str, *post):
+        if post_type == 'text':
+            response_results = json.dumps(
+                [{
+                    'type': 'article',
+                    'id': '0',
+                    'title': f'{post[:20]}...',
+                    'input_message_content': {
+                        'message_text': post[0],
+                        'parse_mode': 'MarkdownV2',
+                        'link_preview_options': {'is_disabled': True}
+                    },
+                    'thumbnail_url': 'https://assets.tumblr.com/pop/manifest/favicon-0e3d244a.ico',
+                }])
+            response = requests.post(f'{self.api_base}/answerInlineQuery',
+                                     params={
+                'inline_query_id': query_id,
+                'results': response_results,
+                'is_personal': True,
+            }
+            )
+            if self.debug:
+                print(response.content)
+        elif post_type == 'image':
+            response_results = json.dumps(
+                [{
+                    'type': 'photo',
+                    'id': '0',
+                    'title': f'{post[0][:20]}...',
+                    'photo_url': post[1],
+                    'caption': post[0],
+                    'parse_mode': 'MarkdownV2',
+                    'show_caption_above_media': True,
+                    'link_preview_options': {'is_disabled': True},
+                    'thumbnail_url': 'https://assets.tumblr.com/pop/manifest/favicon-0e3d244a.ico',
+                }])
+            response = requests.post(f'{self.api_base}/answerInlineQuery',
+                                     params={
+                'inline_query_id': query_id,
+                'results': response_results,
+                'is_personal': True,
+            }
+            )
+            if self.debug:
+                print(response.content)
+        # TODO video
+
+    def _bridge_post_(self, post_type, *post):
+        match post_type:
+            case 'text':
+                self._bridge_post_text_(post)
+            case 'image':
+                self._bridge_post_image_(*post)
+            case 'video':
+                self._bridge_post_video_(*post)
+
     def _process_post_(self, post: dict):
         # Reusing old logic here
-        post = DotMap(post)
 
-        if post.timestamp < self.last_post_time:
-            return
-        if post.state == 'private':
-            return
-
-        print(f'{post.type=}')
         if post.type == 'text':
             try:
                 parsed_post = tumblr_post.TextPost(post)
@@ -99,7 +150,7 @@ class TelegramBot:
                     # print(post_text)
                     # print('')
                     # print('')
-                    self._bridge_post_text_(post_text)
+                    return 'text', post_text
                 case 1:
                     media_url = [
                         trail.media for trail in parsed_post.trail if trail.media][0][0]
@@ -110,13 +161,13 @@ class TelegramBot:
                         post_text, image_url = parsed_post.prettify()
                         # print(f'{post_text=}')
                         # print(f'{image_url=}')
-                        self._bridge_post_image_(post_text, image_url)
+                        return 'image', post_text, image_url
                     elif media_url.endswith('.mp4'):
                         parsed_post = tumblr_post.VideoPost(post)
                         post_text, video_url = parsed_post.prettify()
                         # print(f'{post_text=}')
                         # print(f'{image_url=}')
-                        self._bridge_post_video_(post_text, video_url)
+                        return 'video', post_text, video_url
                 case _:
                     # Multiple images. Impossible with current technology.
                     pass
@@ -126,7 +177,12 @@ class TelegramBot:
             # print(post_text)
             # print('')
             # print('')
-            self._bridge_post_text_(post_text)
+            return 'text', post_text
+
+    def _parse_url_(self, url: str):
+        url = url.replace('/blog/view', '')
+        parsed = list(filter(None, urlparse(url).path.split('/')))[:2]
+        return parsed
 
     def _bridge_thread_(self):
         self.bridge_running = True
@@ -143,14 +199,72 @@ class TelegramBot:
 
             if latest_posts:
                 for post in latest_posts:
-                    self._process_post_(post)
+
+                    post = DotMap(post)
+
+                    if post.timestamp < self.last_post_time:
+                        continue
+                    if post.state == 'private':
+                        continue
+
+                    post_processed = self._process_post_(post)
+                    if post_processed:
+                        self._bridge_post_(*post_processed)
 
             self.last_post_time = int(time())
             sleep(60)
 
     def _inline_thread_(self):
         # TODO don't forget `inline_running`
-        pass
+        self.inline_running = True
+
+        # Init
+        response = DotMap(json.loads(requests.get(
+            f'{self.api_base}/getUpdates').content))
+        if response.ok:
+            if not response.result:
+                # print('Empty update queue. Can\t start inline mode')
+                # return
+                last_update = 0
+            else:
+                last_update = response.result[0].update_id
+        else:
+            print('Can\'t get updates.')
+
+        while self.inline_running:
+            sleep(1)
+            response = DotMap(
+                json.loads(
+                    requests.get(
+                        f'{self.api_base}/getUpdates',
+                        params={
+                            'offset': last_update + 1,
+                            'allowed_updates': '["inline_query"]',
+                        }).content))
+            if not response.ok:
+                print('Can\'t get updates')
+                continue
+
+            results = response.result
+            if not results:
+                continue
+            last_update = response.result[-1].update_id
+            # print(f'{results=}')
+            for result in results:
+                if str(result.inline_query['from'].id) not in self.allowed_users:
+                    continue
+                query = result.inline_query.query
+                if not 'tumblr.com/' in query:
+                    continue
+                blog, post_id = self._parse_url_(query)
+                if not blog or not post_id:
+                    continue
+                post = self.tumblr_client.posts(blog, id=post_id)['posts'][0]
+                # print(f'{post=}')
+                if not post:
+                    continue
+                post = self._process_post_(DotMap(post))
+                self._inline_post_(result.inline_query.id, *post)
 
     def start(self):
         if self.is_bridge:
