@@ -4,13 +4,17 @@ import html2text
 from urllib.parse import urlparse
 import dotmap
 import re
-import telegram
+import json
 import telegramify_markdown
 
-markdown_image_regex = r'🖼\[(.*)\]\((https?:\/\/[^\s)]+\.[a-z]{3,4})\)'
-media_url_regex = r'(https?://[^\s)]+\.[a-z]{3,4})\)'
+media_url_regex = r'(https?://[^\s)]+?\.tumblr\.com/[^\s]+?\.[a-z0-9]{3,4})'
+markdown_url_regex = r'\[(.*)\]\(' + media_url_regex + r'\)'
+image_emoji = '🖼'
+markdown_image_regex = image_emoji + markdown_url_regex
+html_figure_regex = r'<figure class=\"tmblr-full\" data-npf=\"({[^\s]+?})+?\"></figure>'
 
 image_placeholder = '\[image\]'
+video_placeholder = '\[video\]'
 
 
 def format_blog_url(blog: str):
@@ -21,10 +25,30 @@ def format_blog_url(blog: str):
 class TumblrPostTrail:
     def __init__(self, post_trail):
         self.blog = post_trail.blog.name
-        self.content = html2text.html2text(post_trail.content, bodywidth=0)
+
+        self.content = post_trail.content
         self._detect_media_()
 
+        self.content = html2text.html2text(self.content, bodywidth=0)
+
     def _detect_media_(self):
+
+        # Detect video first, replace it with a video url,
+        # html2text can't do figures and will
+        # disregard the video otherwise
+        figures = re.findall(html_figure_regex, self.content)
+        if len(figures) > 1:
+            # Multiple media, the final check in
+            # this function will catch them
+            pass
+        elif figures:
+            figure = dotmap.DotMap(json.loads(html2text.html2text(
+                figures[0], bodywidth=0).strip()))
+            if figure.type == 'video':
+                video_url = figure.url
+                self.content = re.sub(
+                    html_figure_regex, f'<a href="{video_url}">video</a>', self.content)
+
         self.media = re.findall(media_url_regex, self.content)
         if self.media == []:
             return False
@@ -39,7 +63,6 @@ class TumblrPost:
         if 'parent_post_url' in post_data.keys():
             self.is_reblog = True
             post_url = urlparse(post_data.parent_post_url)
-            # print(f'{post_url=}')
             blog_name = post_url.netloc.split('.')[0]
             if blog_name == 'www':
                 blog_name = post_url.path.split('/')[-2]
@@ -99,9 +122,9 @@ class AnswerPost(TumblrPost):
         self.content = ''
         self.asking_name = post_data.asking_name
         self.question = html2text.html2text(
-            post_data.question).replace('\n\n', '\n')
+            post_data.question, bodywidth=0).replace('\n\n', '\n')
         self.answer = html2text.html2text(
-            post_data.answer).replace('\n\n', '\n')
+            post_data.answer, bodywidth=0).replace('\n\n', '\n')
 
     def prettify(self):
         post_buffer = ''
@@ -120,7 +143,7 @@ class AnswerPost(TumblrPost):
         post_buffer += f'[{self.trail[0].blog}]({self.trail[0].blog}.tumblr.com)'
         post_buffer += ' answered:\n'
         answer = html2text.html2text(
-            self.trail[0].content).replace('\n\n', '\n')
+            self.trail[0].content, bodywidth=0).replace('\n\n', '\n')
         post_buffer += f'{telegramify_markdown.markdownify(answer)}\n'
 
         if len(self.trail) == 1:
@@ -131,24 +154,35 @@ class AnswerPost(TumblrPost):
         return post_buffer
 
 
-class ImagePost(TextPost):
+class MediaPost(TextPost):
+
     def prettify(self):
         if self.media_count != 1:
             return '', ''
 
         prettified_text = super().prettify()
         image_url = re.findall(
-            markdown_image_regex, prettified_text)[0][1]
+            self.media_regex, prettified_text)[0][1]
 
         prettified_text = re.sub(
-            markdown_image_regex, image_placeholder, prettified_text)
+            self.media_regex, self.media_placeholder, prettified_text)
         prettified_text = prettified_text.replace(
-            f'{image_placeholder}ALT', image_placeholder)
+            f'{self.media_placeholder}ALT', self.media_placeholder)
 
-        if prettified_text.strip().endswith(image_placeholder):
+        if prettified_text.strip().endswith(self.media_placeholder):
             prettified_text = prettified_text.replace(
-                image_placeholder, '')
+                self.media_placeholder, '')
         return prettified_text, image_url
+
+
+class ImagePost(MediaPost):
+    media_regex = markdown_image_regex
+    media_placeholder = image_placeholder
+
+
+class VideoPost(MediaPost):
+    media_regex = markdown_url_regex
+    media_placeholder = video_placeholder
 
 
 if __name__ == '__main__':

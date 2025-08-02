@@ -38,6 +38,21 @@ def send_image_post(post_text: str, image_url: str):
     # print(response.content)
 
 
+def send_video_post(post_text: str, video_url: str):
+    response = requests.post(
+        f'{base_url}/sendVideo',
+        params={
+            'chat_id': config.telegram_chat_id,
+            'parse_mode': 'MarkdownV2',
+            'link_preview_options': '{"is_disabled": true}',
+            'video': video_url,
+            'show_caption_above_media': True,
+            'caption': post_text,
+        }
+    )
+    # print(response.content)
+
+
 if not os.path.isfile(config.timestamp_file_path):
     with open(config.timestamp_file_path, 'x') as time_file:
         time_file.write(str(int(time())))
@@ -66,21 +81,28 @@ for post in latest_posts:
             case 0:
                 post_text = parsed_post.prettify()
                 # print(post_text)
+                # print('')
+                # print('')
                 send_text_post(post_text)
-                # print('')
-                # print('')
             case 1:
-                parsed_post = tumblr_post.ImagePost(post)
                 media_url = [
                     trail.media for trail in parsed_post.trail if trail.media][0][0]
-                if not media_url.endswith('.jpg') and\
-                        not media_url.endswith('.jpeg') and\
-                        not media_url.endswith('.png'):
+                if media_url.endswith('.jpg') or\
+                        media_url.endswith('.jpeg') or\
+                        media_url.endswith('.png'):
+                    parsed_post = tumblr_post.ImagePost(post)
+                    post_text, image_url = parsed_post.prettify()
+                    # print(f'{post_text=}')
+                    # print(f'{image_url=}')
+                    send_image_post(post_text, image_url)
+                elif media_url.endswith('.mp4'):
+                    parsed_post = tumblr_post.VideoPost(post)
+                    post_text, video_url = parsed_post.prettify()
+                    # print(f'{post_text=}')
+                    # print(f'{image_url=}')
+                    send_video_post(post_text, video_url)
+                else:
                     continue
-                post_text, image_url = parsed_post.prettify()
-                # print(f'{post_text=}')
-                # print(f'{image_url=}')
-                send_image_post(post_text, image_url)
 
             case _:
                 # Multiple images. Impossible with current technology.
@@ -89,9 +111,9 @@ for post in latest_posts:
         parsed_post = tumblr_post.AnswerPost(post)
         post_text = parsed_post.prettify()
         # print(post_text)
+        # print('')
+        # print('')
         send_text_post(post_text)
-        # print('')
-        # print('')
 
 
 with open(config.timestamp_file_path, 'w+') as time_file:
