@@ -27,7 +27,7 @@ timestamp_file_path = '/path/to/timestamp/file'
 
 TODO rewrite this section
 
-- Install `html2text pytumblr python-telegram-bot telegramify-markdown dotmap` modules
+- Install `html2text pytumblr telegramify-markdown dotmap` modules
 
 - Manual activation: run `telegram_bot.py`
 - Automated posting: add it to crontab
