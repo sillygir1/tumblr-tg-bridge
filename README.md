@@ -1,33 +1,19 @@
-# Tumblr to Telegram crossposter
+# Tumblr to Telegram bridge
 
 The whole project is WIP and so is this readme.
 
 >[!IMPORTANT]
-> Needs a `config.py` file containing `blog_name` string, a `tumblr_secret` iterable containing secret stuff (you can get the tuple from the [Tumblr API Console](https://api.tumblr.com/console/calls/user/info)), `telegram_api_key` string (obtainable from [@BotFather](https://t.me/BotFather)), a `telegram_chat_id` string and a `timestamp_file_path` string.
-
-Example `config.py`:
-
-```python
-# DO NOT SHARE YOUR CONFIG FILE OR API KEYS WITH ANYONE
-blog_name = 'name of a blog'
-blog_alias = 'name that will be in tg post'
-tumblr_secret = (
-    'asdnfbvkjcxzhvjsa',
-    'siudfjhgkjfdsvd',
-    'asnfskdjkvelfd',
-    'cvuhsbfdkjszhvlih'
-)
-
-telegram_api_key = '1234567890:asgdyuvcizfnawlvkcvz'
-telegram_chat_id = '1234567890'
-timestamp_file_path = '/path/to/timestamp/file'
-```
+> Needs a `config.py` file for every instance, see `config_example.py`
 
 ## Usage
 
 TODO rewrite this section
 
-- Install `html2text pytumblr telegramify-markdown dotmap` modules
+- Install `html2text pytumblr telegramify-markdown dotmap` modules.
 
-- Manual activation: run `telegram_bot.py`
-- Automated posting: add it to crontab
+- Setup your `config.py`. You can get the Tumblr API keys from [Tumblr API Console](https://api.tumblr.com/console/calls/user/info) and Telegram API key from [@BotFather](https://t.me/BotFather).
+
+- Run `telegram_bot.py`.
+
+- Optionally, you can integrate it into your own script or setup multiple bot instances with separate configuration files.
+
