@@ -135,6 +135,7 @@ class ImagePost(TextPost):
     def prettify(self):
         if self.media_count != 1:
             return '', ''
+
         prettified_text = super().prettify()
         image_url = re.findall(
             markdown_image_regex, prettified_text)[0][1]
