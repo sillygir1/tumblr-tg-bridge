@@ -7,7 +7,7 @@ import re
 import telegram
 import telegramify_markdown
 
-markdown_link_regex = r'🖼\[(.*)\]\((https?:\/\/[^\s)]+\.[a-z]{3,4})\)'
+markdown_image_regex = r'🖼\[(.*)\]\((https?:\/\/[^\s)]+\.[a-z]{3,4})\)'
 media_url_regex = r'(https?://[^\s)]+\.[a-z]{3,4})\)'
 
 image_placeholder = '\[image\]'
@@ -136,15 +136,17 @@ class ImagePost(TextPost):
         if self.media_count != 1:
             return '', ''
         prettified_text = super().prettify()
-        image_url = re.findall(markdown_link_regex, prettified_text)[0][1]
+        image_url = re.findall(
+            markdown_image_regex, prettified_text)[0][1]
 
         prettified_text = re.sub(
-            markdown_link_regex, image_placeholder, prettified_text)
+            markdown_image_regex, image_placeholder, prettified_text)
         prettified_text = prettified_text.replace(
             f'{image_placeholder}ALT', image_placeholder)
-        if len(self.trail) == 1:
+
+        if prettified_text.strip().endswith(image_placeholder):
             prettified_text = prettified_text.replace(
-                image_placeholder, '').replace('\n\n', '\n')
+                image_placeholder, '')
         return prettified_text, image_url
 
 
