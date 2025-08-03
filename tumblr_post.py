@@ -69,9 +69,9 @@ class TumblrPost:
         if 'parent_post_url' in post_data.keys():
             self.is_reblog = True
             post_url = urlparse(post_data.parent_post_url)
-            blog_name = post_url.netloc.split('.')[0]
+            blog_name = str(post_url.netloc).split('.')[0]
             if blog_name == 'www':
-                blog_name = post_url.path.split('/')[-2]
+                blog_name = str(post_url.path).split('/')[-2]
             if blog_name == self.author:
                 blog_name = ''
             self.reblog_source = blog_name
