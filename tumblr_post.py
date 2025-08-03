@@ -82,7 +82,7 @@ class TumblrPost:
     def _format_header_(self) -> str:
         header_buffer = ''
         if self.is_reblog:
-            header_buffer += f'{format_blog_url(config.blog_name)}'
+            header_buffer += f'{format_blog_url(self.blog)}'
             header_buffer += f' [🔁]({self.post_url}) '
             if self.reblog_source:
                 header_buffer += f' {format_blog_url(self.reblog_source)}'
