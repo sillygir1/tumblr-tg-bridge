@@ -120,6 +120,7 @@ class TelegramBot:
                 'inline_query_id': query_id,
                 'results': response_results,
                 'is_personal': True,
+                'cache_time': 0,
             }
             )
             if self.debug:
