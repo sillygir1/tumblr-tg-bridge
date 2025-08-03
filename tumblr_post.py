@@ -107,8 +107,9 @@ class TumblrPost:
     def _format_tags_(self):
         tag_buffer = ''
         for tag in self.tags:
-            tag = telegramify_markdown.markdownify(tag)
+            tag = telegramify_markdown.markdownify(tag).strip()
             tag_buffer += (f'[\#{tag}](tumblr.com/tagged/{tag}) ')
+
         return tag_buffer
 
 
