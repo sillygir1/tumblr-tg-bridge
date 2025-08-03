@@ -198,16 +198,13 @@ if __name__ == '__main__':
         *os.environ.get('TUMBLR_API_KEY').replace(' ', '').split(',')
     )
 
-    posts = client.posts(os.environ.get('BLOG_NAME'))
+    posts = client.posts(os.environ.get('BLOG_NAME'), limit=5)
 
-    for post in posts['posts'][:20]:
+    for post in posts['posts']:
 
         post = dotmap.DotMap(post)
 
-        # try:
         tumblr_post = TumblrPost(post)
-        # except Exception as e:
-        # print('Uwu some ewwow happened')
 
         print(f'{tumblr_post.is_reblog=}')
         print(f'{tumblr_post.author=}')

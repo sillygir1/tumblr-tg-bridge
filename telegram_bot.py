@@ -155,9 +155,6 @@ class TelegramBot:
             match (parsed_post.media_count):
                 case 0:
                     post_text = parsed_post.prettify()
-                    # print(post_text)
-                    # print('')
-                    # print('')
                     return 'text', post_text
                 case 1:
                     media_url = [
@@ -167,14 +164,10 @@ class TelegramBot:
                             media_url.endswith('.png'):
                         parsed_post = tumblr_post.ImagePost(post)
                         post_text, image_url = parsed_post.prettify()
-                        # print(f'{post_text=}')
-                        # print(f'{image_url=}')
                         return 'image', post_text, image_url
                     elif media_url.endswith('.mp4'):
                         parsed_post = tumblr_post.VideoPost(post)
                         post_text, video_url = parsed_post.prettify()
-                        # print(f'{post_text=}')
-                        # print(f'{image_url=}')
                         return 'video', post_text, video_url
                 case _:
                     # Multiple images. Impossible with current technology.
@@ -182,9 +175,6 @@ class TelegramBot:
         elif post.type == 'answer':
             parsed_post = tumblr_post.AnswerPost(post)
             post_text = parsed_post.prettify()
-            # print(post_text)
-            # print('')
-            # print('')
             return 'text', post_text
 
     def _parse_url_(self, url: str):
@@ -238,8 +228,6 @@ class TelegramBot:
             f'{self.api_base}/getUpdates').content))
         if response.ok:
             if not response.result:
-                # print('Empty update queue. Can\t start inline mode')
-                # return
                 last_update = 0
             else:
                 last_update = response.result[0].update_id
@@ -266,7 +254,6 @@ class TelegramBot:
                     continue
 
                 last_update = response.result[-1].update_id
-                # print(f'{results=}')
                 for result in results:
                     if str(result.inline_query['from'].id) not in self.allowed_users:
                         continue
