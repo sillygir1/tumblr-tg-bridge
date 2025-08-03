@@ -17,14 +17,20 @@ image_placeholder = '\[image\]'
 video_placeholder = '\[video\]'
 
 
-def format_blog_url(blog: str):
+def format_blog_url(blog: str, *, post_url: str = '', post_id: int = 0):
     blog = blog.replace('-', '\-')
-    return f'[{blog}]({blog}.tumblr.com)'
+    if post_url:
+        return f'[{blog}]({post_url})'
+    elif post_id:
+        return f'[{blog}]({blog}.tumblr.com/{post_id})'
+    else:
+        return f'[{blog}]({blog}.tumblr.com)'
 
 
 class TumblrPostTrail:
     def __init__(self, post_trail):
         self.blog = post_trail.blog.name
+        self.id = post_trail.post.id
 
         self.content = post_trail.content
         self._detect_media_()
@@ -77,15 +83,17 @@ class TumblrPost:
         self.media_count = sum([len(trail.media) for trail in self.trail])
         self.tags = post_data.tags
         self.blog = post_data.blog_name
+        self.post_url = post_data.post_url
+        self.parent_post_url = post_data.parent_post_url
         self.timestamp = post_data.timestamp
 
     def _format_header_(self) -> str:
         header_buffer = ''
         if self.is_reblog:
-            header_buffer += f'{format_blog_url(self.blog)}'
-            header_buffer += f' [🔁]({self.post_url}) '
+            header_buffer += f'{format_blog_url(self.blog, post_url=self.post_url)} 🔁 '
+            # header_buffer += f' []({self.post_url}) '
             if self.reblog_source:
-                header_buffer += f' {format_blog_url(self.reblog_source)}'
+                header_buffer += f' {format_blog_url(self.reblog_source, post_url=self.parent_post_url)}'
             header_buffer += '\n'
         return header_buffer
 
@@ -94,7 +102,7 @@ class TumblrPost:
         for trail in self.trail[start:]:
             content = telegramify_markdown.markdownify(
                 trail.content.replace('\n\n', '\n'))
-            trail_buffer += f'{format_blog_url(trail.blog)}:\n{content}\n'
+            trail_buffer += f'{format_blog_url(trail.blog, post_id=trail.id)}:\n{content}\n'
         return trail_buffer
 
     def _format_tags_(self):
