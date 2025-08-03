@@ -68,7 +68,7 @@ class TumblrPost:
 
         if 'parent_post_url' in post_data.keys() and post_data.parent_post_url:
             self.is_reblog = True
-            post_url = (post_data.parent_post_url)
+            post_url = urlparse(post_data.parent_post_url)
             blog_name = post_url.netloc.split('.')[0]
             if blog_name == 'www':
                 blog_name = post_url.path.split('/')[-2]
@@ -136,7 +136,7 @@ class AnswerPost(TumblrPost):
     def prettify(self):
         post_buffer = ''
         post_buffer += self._format_header_()
-        if self.asking_name == '>Anonymous':
+        if 'Anonymous' in self.asking_name:
             post_buffer += f'{self.asking_name}'
         else:
             post_buffer += f'[{self.asking_name}]({self.asking_name}.tumblr.com)'
