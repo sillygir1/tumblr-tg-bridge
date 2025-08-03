@@ -21,6 +21,7 @@ tumblr_secret = (
     'oauth_token_secret'
 )
 telegram_chat_id = '1234567890'
+update_time = 30  # Seconds between updates
 
 # Inline mode config:
 
