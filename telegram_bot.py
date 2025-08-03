@@ -97,6 +97,7 @@ class TelegramBot:
                 'inline_query_id': query_id,
                 'results': response_results,
                 'is_personal': True,
+                'cache_time': 0,
             }
             )
             if self.debug:
@@ -263,7 +264,6 @@ class TelegramBot:
                         continue
                     post = self.tumblr_client.posts(
                         blog, id=post_id)['posts'][0]
-                    # print(f'{post=}')
                     if not post:
                         continue
                     post = self._process_post_(DotMap(post))
