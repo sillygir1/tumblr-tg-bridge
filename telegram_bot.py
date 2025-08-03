@@ -9,8 +9,9 @@ import traceback
 import tumblr_post
 from urllib.parse import urlparse
 
-# from dotenv import load_dotenv
-# load_dotenv()
+if not os.environ.get('IS_RUNNING_IN_DOCKER', False):
+    from dotenv import load_dotenv
+    load_dotenv()
 
 
 class TelegramBot:
