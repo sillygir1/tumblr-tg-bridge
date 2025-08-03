@@ -1,6 +1,5 @@
-import config
 from dotmap import DotMap
-# import os.path
+import os
 import json
 import pytumblr
 import requests
@@ -10,36 +9,44 @@ import traceback
 import tumblr_post
 from urllib.parse import urlparse
 
+# from dotenv import load_dotenv
+# load_dotenv()
+
 
 class TelegramBot:
-    def __init__(self, config_file):
-        self.is_bridge = 'bridge' in config_file.mode
-        self.is_inline = 'inline' in config_file.mode
-        self.api_base = config_file.api_url
-        self.debug = config_file.debug
-        self.blog_name = config_file.blog_name
-        self.tumblr_client = pytumblr.TumblrRestClient(
-            *config_file.tumblr_secret)
+    def __init__(self):
+        self.is_bridge = 'bridge' in os.environ.get('MODE')
+        self.is_inline = 'inline' in os.environ.get('MODE')
+        self.api_base =\
+            os.environ.get('TELEGRAM_API_BASE') +\
+            os.environ.get('TELEGRAM_API_KEY')
+        self.debug = bool(os.environ.get('DEBUG'))
+        self.blog_name = os.environ.get('BLOG_NAME')
+        self.tumblr_client =\
+            pytumblr.TumblrRestClient(
+                *os.environ.get('TUMBLR_API_KEY').replace(' ', '').split(',')
+            )
 
         self.bridge_running = False
         self.inline_running = False
 
         if self.is_bridge:
-            self.chat_id = config_file.telegram_chat_id
-            self.update_time = config_file.update_time
+            self.chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+            self.update_time = int(os.environ.get('UPDATE_TIME'))
             self.last_post_time = int(time())
 
+        allowed_users = os.environ.get('ALLOWED_USERS')
         if self.is_inline:
-            if config_file.allowed_user_ids == 'all':
+            if allowed_users == 'all':
                 self.allowed_users = 'all'
             else:
-                self.allowed_users = config_file.allowed_user_ids
+                self.allowed_users = allowed_users.split(',')
 
     def _bridge_post_text_(self, post_text: str):
         response = requests.post(
             f'{self.api_base}/sendMessage',
             params={
-                'chat_id': config.telegram_chat_id,
+                'chat_id': self.chat_id,
                 'parse_mode': 'MarkdownV2',
                 'link_preview_options': '{"is_disabled": true}',
                 'text': post_text,
@@ -52,7 +59,7 @@ class TelegramBot:
         response = requests.post(
             f'{self.api_base}/sendPhoto',
             params={
-                'chat_id': config.telegram_chat_id,
+                'chat_id': self.chat_id,
                 'parse_mode': 'MarkdownV2',
                 'link_preview_options': '{"is_disabled": true}',
                 'photo': image_url,
@@ -67,7 +74,7 @@ class TelegramBot:
         response = requests.post(
             f'{self.api_base}/sendVideo',
             params={
-                'chat_id': config.telegram_chat_id,
+                'chat_id': self.chat_id,
                 'parse_mode': 'MarkdownV2',
                 'link_preview_options': '{"is_disabled": true}',
                 'video': video_url,
@@ -195,13 +202,15 @@ class TelegramBot:
 
         while self.bridge_running:
             try:
-                latest_posts = self.tumblr_client.posts(config.blog_name,
+                latest_posts = self.tumblr_client.posts(self.blog_name,
                                                         #    type='text',
                                                         limit=5)['posts'][::-1]
             except Exception as e:
                 if self.debug:
                     print('Exception when getting latest posts.')
                     print(traceback.format_exc())
+                    sleep(self.update_time)
+                    continue
 
             if latest_posts:
                 for post in latest_posts:
@@ -293,6 +302,6 @@ class TelegramBot:
 
 
 if __name__ == '__main__':
-    bot = TelegramBot(config)
+    bot = TelegramBot()
     bot.start()
     bot.wait()
