@@ -66,12 +66,12 @@ class TumblrPost:
 
         self.author = post_data.trail[-1].blog['name']
 
-        if 'parent_post_url' in post_data.keys():
+        if 'parent_post_url' in post_data.keys() and post_data.parent_post_url:
             self.is_reblog = True
-            post_url = urlparse(post_data.parent_post_url)
-            blog_name = str(post_url.netloc).split('.')[0]
+            post_url = (post_data.parent_post_url)
+            blog_name = post_url.netloc.split('.')[0]
             if blog_name == 'www':
-                blog_name = str(post_url.path).split('/')[-2]
+                blog_name = post_url.path.split('/')[-2]
             if blog_name == self.author:
                 blog_name = ''
             self.reblog_source = blog_name
@@ -91,7 +91,6 @@ class TumblrPost:
         header_buffer = ''
         if self.is_reblog:
             header_buffer += f'{format_blog_url(self.blog, post_url=self.post_url)} 🔁 '
-            # header_buffer += f' []({self.post_url}) '
             if self.reblog_source:
                 header_buffer += f' {format_blog_url(self.reblog_source, post_url=self.parent_post_url)}'
             header_buffer += '\n'

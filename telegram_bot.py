@@ -120,7 +120,6 @@ class TelegramBot:
                 'inline_query_id': query_id,
                 'results': response_results,
                 'is_personal': True,
-                'cache_time': 0,
             }
             )
             if self.debug:
@@ -185,11 +184,11 @@ class TelegramBot:
         url = urlparse(url
                        .replace('/blog/view/', '/')
                        .replace('/post/', '/'))
-        possible_blogname = str(url.netloc).split('.')[0]
+        possible_blogname = url.netloc.split('.')[0]
         if possible_blogname == 'www':
-            return list(filter(None, str(url.path).split('/')))[:2]
+            return list(filter(None, url.path.split('/')))[:2]
         else:
-            return possible_blogname, str(url.path).replace('/', '')
+            return possible_blogname, url.path.replace('/', '')
 
     def _bridge_thread_(self):
         self.bridge_running = True
