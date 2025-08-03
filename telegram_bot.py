@@ -26,7 +26,7 @@ class TelegramBot:
 
         if self.is_bridge:
             self.chat_id = config_file.telegram_chat_id
-
+            self.update_time = config_file.update_time
             self.last_post_time = int(time())
 
         if self.is_inline:
@@ -212,7 +212,7 @@ class TelegramBot:
                         self._bridge_post_(*post_processed)
 
             self.last_post_time = int(time())
-            sleep(60)
+            sleep(self.update_time)
 
     def _inline_thread_(self):
         # TODO don't forget `inline_running`
