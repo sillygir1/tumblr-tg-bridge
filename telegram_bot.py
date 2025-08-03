@@ -181,9 +181,14 @@ class TelegramBot:
             return 'text', post_text
 
     def _parse_url_(self, url: str):
-        url = url.replace('/blog/view', '')
-        parsed = list(filter(None, urlparse(url).path.split('/')))[:2]
-        return parsed
+        url = urlparse(url
+                       .replace('/blog/view/', '/')
+                       .replace('/post/', '/'))
+        possible_blogname = url.netloc.split('.')[0]
+        if possible_blogname == 'www':
+            return list(filter(None, url.path.split('/')))[:2]
+        else:
+            return possible_blogname, url.path.replace('/', '')
 
     def _bridge_thread_(self):
         self.bridge_running = True
