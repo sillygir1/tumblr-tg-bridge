@@ -1,11 +1,11 @@
 import pytumblr
-import config
 import html2text
 from urllib.parse import urlparse
 import dotmap
 import re
 import json
 import telegramify_markdown
+import os
 
 media_url_regex = r'(https?://[^\s)]+?\.tumblr\.com/[^\s]+?\.[a-z0-9]{3,4})'
 markdown_url_regex = r'\[(.*)\]\(' + media_url_regex + r'\)'
@@ -194,9 +194,11 @@ class VideoPost(MediaPost):
 
 
 if __name__ == '__main__':
-    client = pytumblr.TumblrRestClient(*config.tumblr_secret)
+    client = pytumblr.TumblrRestClient(
+        *os.environ.get('TUMBLR_API_KEY').replace(' ', '').split(',')
+    )
 
-    posts = client.posts(config.blog_name)
+    posts = client.posts(os.environ.get('BLOG_NAME'))
 
     for post in posts['posts'][:20]:
 
