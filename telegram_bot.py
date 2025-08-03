@@ -285,17 +285,14 @@ class TelegramBot:
             self.thread_inline = threading.Thread(target=self._inline_thread_)
             self.thread_inline.start()
 
-    def stop(self):
-        if self.bridge_running:
-            self.bridge_running = False
-            self.thread_bridge.join()
+    def wait(self):
         if self.inline_running:
-            self.inline_running = False
             self.thread_inline.join()
+        if self.bridge_running:
+            self.thread_bridge.join()
 
 
 if __name__ == '__main__':
     bot = TelegramBot(config)
     bot.start()
-    input('press ENTER to stop')
-    bot.stop()
+    bot.wait()
