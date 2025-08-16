@@ -188,7 +188,6 @@ class MediaPost(TextPost):
             return '', ''
 
         prettified_text = super().prettify()
-        print(f'{prettified_text}')
         image_url, prettified_text =\
             extract_media(prettified_text, self.media_regex,
                           self.media_placeholder)
