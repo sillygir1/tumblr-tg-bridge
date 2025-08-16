@@ -23,7 +23,7 @@ The whole project is WIP and so is this readme.
     - [ ] GIFs
 - Inline mode:
     - [x] Text posts
-    - [ ] Asks
+    - [x] Asks
         - [x] Text-only
         - [x] With image attached
     - [ ] Image posts
