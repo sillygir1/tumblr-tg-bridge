@@ -25,7 +25,10 @@ class TelegramBot:
         self.blog_name = os.environ.get('BLOG_NAME')
         self.tumblr_client =\
             pytumblr.TumblrRestClient(
-                *os.environ.get('TUMBLR_API_KEY').replace(' ', '').split(',')
+                os.environ.get('TUMBLR_CONSUMER_KEY'),
+                os.environ.get('TUMBLR_CONSUMER_SECRET'),
+                os.environ.get('TUMBLR_TOKEN'),
+                os.environ.get('TUMBLR_TOKEN_SECRET'),
             )
 
         self.bridge_running = False
@@ -176,7 +179,21 @@ class TelegramBot:
         elif post.type == 'answer':
             parsed_post = tumblr_post.AnswerPost(post)
             post_text = parsed_post.prettify()
-            return 'text', post_text
+            match parsed_post.media_count:
+                case 0:
+                    return 'text', post_text
+                case 1:
+                    media_url = [
+                        trail.media for trail in parsed_post.trail if trail.media][0][0]
+                    if media_url.endswith('.jpg') or\
+                            media_url.endswith('.jpeg') or\
+                            media_url.endswith('.png'):
+                        image_url, post_text = tumblr_post.extract_media(
+                            post_text,
+                            tumblr_post.markdown_image_regex,
+                            tumblr_post.image_placeholder
+                        )
+                        return 'image', post_text, image_url
 
     def _parse_url_(self, url: str):
         url = urlparse(url
@@ -194,7 +211,6 @@ class TelegramBot:
         while self.bridge_running:
             try:
                 latest_posts = self.tumblr_client.posts(self.blog_name,
-                                                        #    type='text',
                                                         limit=5)['posts'][::-1]
             except Exception as e:
                 if self.debug:

@@ -27,12 +27,31 @@ def format_blog_url(blog: str, *, post_url: str = '', post_id: int = 0):
         return f'[{blog}]({blog}.tumblr.com)'
 
 
+# TODO do this properly
+def extract_media(text, media_regex, media_placeholder):
+    image_url = re.findall(
+        media_regex, text)[0][1]
+
+    text = re.sub(
+        media_regex, media_placeholder, text)
+    text = text.replace(
+        f'{media_placeholder}ALT', media_placeholder)
+
+    if text.strip().endswith(media_placeholder):
+        text = text.replace(
+            media_placeholder, '')
+
+    return image_url, text
+
+
 class TumblrPostTrail:
     def __init__(self, post_trail):
         self.blog = post_trail.blog.name
         self.id = post_trail.post.id
 
-        self.content = post_trail.content
+        self.content = post_trail.content if post_trail.content\
+            else post_trail.content_raw if post_trail.content_raw\
+            else ''
         self._detect_media_()
 
         self.content = html2text.html2text(self.content, bodywidth=0)
@@ -169,17 +188,10 @@ class MediaPost(TextPost):
             return '', ''
 
         prettified_text = super().prettify()
-        image_url = re.findall(
-            self.media_regex, prettified_text)[0][1]
-
-        prettified_text = re.sub(
-            self.media_regex, self.media_placeholder, prettified_text)
-        prettified_text = prettified_text.replace(
-            f'{self.media_placeholder}ALT', self.media_placeholder)
-
-        if prettified_text.strip().endswith(self.media_placeholder):
-            prettified_text = prettified_text.replace(
-                self.media_placeholder, '')
+        print(f'{prettified_text}')
+        image_url, prettified_text =\
+            extract_media(prettified_text, self.media_regex,
+                          self.media_placeholder)
         return prettified_text, image_url
 
 
