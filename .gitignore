@@ -1,2 +1,3 @@
 .env
 tumblr_bridge.env
+compose.yml
