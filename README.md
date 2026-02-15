@@ -4,12 +4,12 @@ The whole project is WIP and so is this readme.
 
 ## Usage
 
-- Create a `.env` file as in `.env_example`.
+- Create a env file with API keys (use `example.env` as reference).
 
-- Run docker container
-    ```sh
-    docker run -d --name tumblr-bridge --env-file=/path/to/.env ghcr.io/sillygir1/tumblr-tg-bridge:main
-    ```
+- Create a `compose.yml` referencing `example-compose.yml`:
+
+- Run it with `docker-compose up -d`.
+
 
 ## TODO
 
